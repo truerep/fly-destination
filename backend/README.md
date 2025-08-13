@@ -35,17 +35,24 @@ backend/
 ├── controllers/          # Business logic
 │   ├── authController.js
 │   ├── userController.js
-│   └── airportController.js
+│   ├── airportController.js
+│   ├── ticketController.js
+│   └── bookingController.js
 ├── middleware/           # Custom middleware
 │   ├── auth.js
 │   └── validation.js
 ├── models/              # Database models
 │   ├── User.js
-│   └── Airport.js
+│   ├── Airport.js
+│   ├── Ticket.js
+│   └── Booking.js
 ├── routes/              # API routes
 │   ├── auth.routes.js
 │   ├── user.routes.js
-│   └── airport.routes.js
+│   ├── airport.routes.js
+│   ├── ticket.routes.js
+│   ├── booking.routes.js
+│   └── agent.routes.js
 ├── services/            # External services
 │   └── smsService.js
 ├── utils/               # Utility functions
@@ -294,6 +301,126 @@ backend/
 - **Headers**: `Authorization: Bearer <admin-token>`
 - **Response**: Updated airport data
 
+### Ticket Inventory Routes (`/api/tickets`) - Admin Only
+
+**GET** `/api/tickets`
+- Get all tickets with pagination and filtering
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Query Parameters**:
+  - `page` (number): Page number
+  - `limit` (number): Items per page
+  - `from` (string): 3-letter origin airport code
+  - `to` (string): 3-letter destination airport code
+  - `date` (ISO date): Departure date filter
+  - `airline` (string): Airline name filter
+  - `pnr` (string): PNR filter
+  - `q` (string): Generic search across airline, PNR, route (from/to), flight number
+  - `isActive` (boolean): Filter by active status
+
+**GET** `/api/tickets/:id`
+- Get ticket by ID
+- **Headers**: `Authorization: Bearer <admin-token>`
+
+**POST** `/api/tickets`
+- Create new ticket (add to inventory)
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Body**:
+  - `fromAirport` (string, 3-letter IATA)
+  - `toAirport` (string, 3-letter IATA)
+  - `airline` (string)
+  - `flightNumber` (string)
+  - `pnr` (string, optional)
+  - `departureTime` (ISO datetime)
+  - `arrivalTime` (ISO datetime)
+  - `basePrice` (number)
+  - `quantityTotal` (number)
+  - `quantityAvailable` (number, optional; defaults to `quantityTotal` on create)
+- **Response**: Created ticket data
+
+**PUT** `/api/tickets/:id`
+- Update ticket
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Body**: Any updatable ticket fields
+- **Response**: Updated ticket data
+
+**DELETE** `/api/tickets/:id`
+- Delete ticket
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Response**: Success message
+
+### Booking Routes (`/api/bookings`)
+
+#### Agent Endpoints
+
+**GET** `/api/bookings/search`
+- Search available tickets by route and date
+- **Headers**: `Authorization: Bearer <agent-token>`
+- **Query Parameters**:
+  - `from` (string, required): 3-letter origin airport code
+  - `to` (string, required): 3-letter destination airport code
+  - `date` (ISO date, required): Departure date
+  - `page` (number): Page number
+  - `limit` (number): Items per page
+
+**POST** `/api/bookings`
+- Create a booking for selected ticket
+- **Headers**: `Authorization: Bearer <agent-token>`
+- **Body**:
+  - `ticketId` (string, required)
+  - `quantity` (number, required, >= 1)
+  - `infants` (number, optional, >= 0)
+  - `passengers` (array, optional): list of passenger details with `type` per passenger
+- Pricing is auto-calculated as: `unitSellingPrice = basePrice + agent.markerAmount`
+- Funds check: Available funds (balance + available credit) must cover total base price (`quantity * basePrice`)
+- Reserves inventory on success and returns a unique booking reference like `FTD857345`
+- **Response**: Created booking
+
+**GET** `/api/bookings`
+- List my bookings
+- **Headers**: `Authorization: Bearer <agent-token>`
+- **Query Parameters**:
+  - `page` (number): Page number
+  - `limit` (number): Items per page
+  - `q` (string, optional): generic search across reference or PNR
+  - `reference` (string, optional): exact or case-insensitive booking reference (e.g., FTD857345)
+  - `pnr` (string, optional): match by PNR (from ticket)
+
+**POST** `/api/bookings/:id/request-name-change`
+- Request passenger name update for a booking
+- **Headers**: `Authorization: Bearer <agent-token>`
+- **Body**: `{ note?: string }`
+- **Response**: Booking with pending name change request
+
+#### Admin Endpoints
+
+**POST** `/api/bookings/:id/process-name-change`
+- Approve or reject name change request; on approval, update passenger names
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Body**:
+  - `action`: `approve` | `reject`
+  - `passengers` (array, required when `approve`): must match `quantity`
+  - `note` (string, optional)
+- **Response**: Updated booking
+
+**GET** `/api/bookings/admin/all`
+- List/search all bookings (admin)
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Query Parameters**:
+  - `page` (number): Page number
+  - `limit` (number): Items per page
+  - `q` (string, optional): generic search across reference, partner info, PNR
+  - `reference` (string, optional): exact or partial booking reference
+  - `pnr` (string, optional): PNR filter (ticket.pnr)
+  - `partner` (string, optional): partner/company/agentId/email/phone filter
+
+### Agent Routes (`/api/agent`)
+
+**POST** `/api/agent/marker-amount`
+- Update agent-specific marker amount used to compute selling price (`basePrice + markerAmount`)
+- **Headers**: `Authorization: Bearer <agent-token>`
+- **Body**: `{ markerAmount: number (>= 0) }`
+- **Response**: Updated agent profile
+
 ## Data Models
 
 ### User Model Schema
@@ -326,6 +453,12 @@ backend/
 - `pincode`: String (required for agents)
 - `remark`: String
 
+#### Finance Fields (for Agents)
+- `balance`: Number (default: 0)
+- `creditLimit`: Number (default: 0)
+- `creditUsed`: Number (default: 0)
+- `markerAmount`: Number (default: 0)
+
 ### Airport Model Schema
 
 #### Required Fields
@@ -343,6 +476,51 @@ backend/
 - `description`: String (max 500 characters)
 - `isActive`: Boolean (default: true)
 - `updatedBy`: ObjectId (reference to User who last updated it)
+
+### Ticket Model Schema
+
+#### Required Fields
+- `fromAirport`: String (3-letter IATA, uppercase)
+- `toAirport`: String (3-letter IATA, uppercase)
+- `airline`: String
+- `flightNumber`: String
+- `departureTime`: Date (ISO)
+- `arrivalTime`: Date (ISO)
+- `basePrice`: Number (>= 0)
+- `quantityTotal`: Number (>= 0)
+- `quantityAvailable`: Number (>= 0; defaults to `quantityTotal` on create)
+
+#### Optional Fields
+- `pnr`: String
+- `isActive`: Boolean (default: true)
+- `createdBy`: ObjectId (User)
+- `updatedBy`: ObjectId (User)
+
+### Booking Model Schema
+
+#### Required Fields
+- `ticket`: ObjectId (Ticket)
+- `agent`: ObjectId (User)
+- `quantity`: Number (>= 1)
+- `unitBasePrice`: Number (>= 0)
+- `unitSellingPrice`: Number (>= 0)
+- `totalBasePrice`: Number (>= 0)
+- `totalSellingPrice`: Number (>= 0)
+
+#### Optional Fields
+- `passengers`: Array of passenger objects `{ firstName, lastName, gender, dateOfBirth?, passportNumber? }`
+- `status`: 'booked' | 'cancelled' (default: 'booked')
+- `nameChangeRequest`: `{ requested, status, requestedAt, requestedBy, processedAt, processedBy, note }`
+- `createdBy` / `updatedBy`: ObjectId (User)
+- `reference`: String (unique) in format `FTD` + 6 digits (e.g., FTD857345)
+- `infants`: Number (>= 0)
+- Passenger `type`: 'adult' | 'child'
+
+## Booking Reference
+
+- Generated at booking time
+- **Format**: `FTD` + 6 random digits (e.g., `FTD857345`)
+- **Uniqueness**: Ensured system-wide; retried if collision detected
 
 ## Agent ID Generation
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from "@/components/ui/sidebar";
-import { Users, LogOut, Plane } from "lucide-react";
+import { Users, LogOut, Plane, Ticket, ListChecks, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AdminLayout({ children }) {
@@ -40,6 +40,30 @@ export default function AdminLayout({ children }) {
 											<Link href="/admin-panel/airports" className="flex items-center gap-2">
 												<Plane className="size-4" />
 												<span>Airports</span>
+											</Link>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+									<SidebarMenuItem>
+										<SidebarMenuButton asChild>
+											<Link href="/admin-panel/tickets" className="flex items-center gap-2">
+												<Ticket className="size-4" />
+												<span>Tickets</span>
+											</Link>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+									<SidebarMenuItem>
+										<SidebarMenuButton asChild>
+											<Link href="/admin-panel/bookings" className="flex items-center gap-2">
+												<ListChecks className="size-4" />
+												<span>Bookings</span>
+											</Link>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+									<SidebarMenuItem>
+										<SidebarMenuButton asChild>
+											<Link href="/admin-panel/requests" className="flex items-center gap-2">
+												<ClipboardList className="size-4" />
+												<span>Requests</span>
 											</Link>
 										</SidebarMenuButton>
 									</SidebarMenuItem>

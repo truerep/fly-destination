@@ -8,6 +8,9 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const airportRoutes = require('./routes/airport.routes');
+const ticketRoutes = require('./routes/ticket.routes');
+const bookingRoutes = require('./routes/booking.routes');
+const agentRoutes = require('./routes/agent.routes');
 
 const app = express();
 
@@ -47,6 +50,9 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/airports', airportRoutes);
+app.use('/api/tickets', ticketRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/agent', agentRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

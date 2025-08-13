@@ -129,6 +129,28 @@ const userSchema = new mongoose.Schema({
     type: String
   },
 
+  // Finance (for agents)
+  balance: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  creditLimit: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  creditUsed: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  markerAmount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+
   // OTP and Verification
   phoneOtp: {
     code: String,
@@ -157,6 +179,7 @@ userSchema.index({ userType: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ isBlocked: 1 });
 userSchema.index({ agentId: 1 });
+userSchema.index({ balance: 1 });
 
 // Pre-save middleware to hash password and generate agentId
 userSchema.pre('save', async function(next) {

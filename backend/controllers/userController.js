@@ -312,6 +312,20 @@ class UserController {
       return ResponseHandler.error(res, 'Failed to search users');
     }
   }
+
+  // Agent updates own marker amount
+  async updateMyMarkerAmount(req, res) {
+    try {
+      const { markerAmount } = req.body;
+      if (typeof markerAmount === 'undefined' || Number(markerAmount) < 0) {
+        return ResponseHandler.validationError(res, [{ field: 'markerAmount', message: 'markerAmount must be >= 0', value: markerAmount }]);
+      }
+      const user = await User.findByIdAndUpdate(req.user._id, { markerAmount: Number(markerAmount) }, { new: true });
+      return ResponseHandler.success(res, user.toPublicJSON(), 'Marker amount updated');
+    } catch (error) {
+      return ResponseHandler.error(res, error.message || 'Failed to update marker amount');
+    }
+  }
 }
 
 module.exports = new UserController(); 

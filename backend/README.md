@@ -8,6 +8,7 @@ A scalable Express.js backend API for the Fly Destination travel application wit
 - 👥 Multi-role user system (Agent, Customer, Admin)
 - 🆔 Auto-generated Agent IDs (FD + 4 digits)
 - 🔑 Multi-identifier Login (Email/Phone/Agent ID for agents)
+- ✈️ Airport Management System
 - 📱 SMS OTP verification via Twilio
 - 📧 Email verification support
 - 🛡️ Input validation and sanitization
@@ -33,15 +34,18 @@ A scalable Express.js backend API for the Fly Destination travel application wit
 backend/
 ├── controllers/          # Business logic
 │   ├── authController.js
-│   └── userController.js
+│   ├── userController.js
+│   └── airportController.js
 ├── middleware/           # Custom middleware
 │   ├── auth.js
 │   └── validation.js
 ├── models/              # Database models
-│   └── User.js
+│   ├── User.js
+│   └── Airport.js
 ├── routes/              # API routes
 │   ├── auth.routes.js
-│   └── user.routes.js
+│   ├── user.routes.js
+│   └── airport.routes.js
 ├── services/            # External services
 │   └── smsService.js
 ├── utils/               # Utility functions
@@ -220,9 +224,81 @@ backend/
 - **Headers**: `Authorization: Bearer <admin-token>`
 - **Response**: Updated user data
 
-## User Model Schema
+### Airport Management Routes (`/api/airports`) - Admin Only
 
-### Common Fields
+**GET** `/api/airports`
+- Get all airports with pagination and filtering
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Query Parameters**: 
+  - `page` (number): Page number
+  - `limit` (number): Items per page
+  - `isActive` (boolean): Filter by active status
+  - `country` (string): Filter by country
+  - `city` (string): Filter by city
+  - `search` (string): Search in airport code, name, city, country
+
+**GET** `/api/airports/stats`
+- Get airport statistics
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Response**: Airport count statistics
+
+**GET** `/api/airports/search`
+- Advanced airport search
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Query Parameters**: 
+  - `q` (string): Search query
+  - `country` (string): Filter by country
+  - `city` (string): Filter by city
+  - `isActive` (boolean): Filter by active status
+
+**GET** `/api/airports/code/:code`
+- Get airport by airport code (e.g., DEL, BOM, JFK)
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Response**: Airport data
+
+**GET** `/api/airports/:id`
+- Get airport by ID
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Response**: Airport data
+
+**POST** `/api/airports`
+- Create new airport
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Body**: Airport data
+- **Response**: Created airport data
+
+**POST** `/api/airports/bulk-import`
+- Bulk import airports
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Body**: `{ airports: [...] }`
+- **Response**: Import results
+
+**PUT** `/api/airports/:id`
+- Update airport
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Body**: Update data
+- **Response**: Updated airport data
+
+**DELETE** `/api/airports/:id`
+- Delete airport
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Response**: Success message
+
+**PATCH** `/api/airports/:id/activate`
+- Activate airport
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Response**: Updated airport data
+
+**PATCH** `/api/airports/:id/deactivate`
+- Deactivate airport
+- **Headers**: `Authorization: Bearer <admin-token>`
+- **Response**: Updated airport data
+
+## Data Models
+
+### User Model Schema
+
+#### Common Fields
 - `userType`: 'agent' | 'customer' | 'admin'
 - `email`: String (required, unique)
 - `password`: String (required, hashed)
@@ -232,7 +308,7 @@ backend/
 - `isEmailVerified`: Boolean (default: false)
 - `isPhoneVerified`: Boolean (default: false)
 
-### Agent-Specific Fields
+#### Agent-Specific Fields
 - `agentId`: String (auto-generated, format: FD + 4 digits, e.g., FD8930)
 - `companyName`: String (required for agents)
 - `landlineNumber`: String
@@ -249,6 +325,24 @@ backend/
 - `country`: String (required for agents)
 - `pincode`: String (required for agents)
 - `remark`: String
+
+### Airport Model Schema
+
+#### Required Fields
+- `airportCode`: String (3 uppercase letters, e.g., DEL, BOM, JFK)
+- `airportName`: String (airport name)
+- `city`: String (city name)
+- `country`: String (country name)
+- `createdBy`: ObjectId (reference to User who created it)
+
+#### Optional Fields
+- `state`: String (state/province)
+- `timezone`: String (default: 'UTC')
+- `latitude`: Number (-90 to 90 degrees)
+- `longitude`: Number (-180 to 180 degrees)
+- `description`: String (max 500 characters)
+- `isActive`: Boolean (default: true)
+- `updatedBy`: ObjectId (reference to User who last updated it)
 
 ## Agent ID Generation
 
@@ -392,10 +486,100 @@ Content-Type: application/json
 }
 ```
 
-### Get Users (Admin) - Search by Agent ID
+### Create Airport
 ```bash
-GET /api/users?page=1&limit=10&userType=agent&search=FD8930
-Authorization: Bearer <admin-jwt-token>
+POST /api/airports
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+
+{
+  "airportCode": "DEL",
+  "airportName": "Indira Gandhi International Airport",
+  "city": "New Delhi",
+  "country": "India",
+  "state": "Delhi",
+  "timezone": "Asia/Kolkata",
+  "latitude": 28.5562,
+  "longitude": 77.1000,
+  "description": "Primary international airport serving Delhi"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Airport created successfully",
+  "data": {
+    "airport": {
+      "_id": "64f8a1b2c3d4e5f6a7b8c9d0",
+      "airportCode": "DEL",
+      "airportName": "Indira Gandhi International Airport",
+      "city": "New Delhi",
+      "country": "India",
+      "state": "Delhi",
+      "timezone": "Asia/Kolkata",
+      "latitude": 28.5562,
+      "longitude": 77.1000,
+      "description": "Primary international airport serving Delhi",
+      "isActive": true,
+      "createdBy": {
+        "_id": "64f8a1b2c3d4e5f6a7b8c9d1",
+        "email": "admin@flydestination.com",
+        "userType": "admin"
+      },
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  },
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+### Get Airports
+```bash
+GET /api/airports?page=1&limit=10&country=India&isActive=true
+Authorization: Bearer <admin-token>
+```
+
+### Search Airports
+```bash
+GET /api/airports/search?q=delhi&country=India
+Authorization: Bearer <admin-token>
+```
+
+### Get Airport by Code
+```bash
+GET /api/airports/code/DEL
+Authorization: Bearer <admin-token>
+```
+
+### Bulk Import Airports
+```bash
+POST /api/airports/bulk-import
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+
+{
+  "airports": [
+    {
+      "airportCode": "BOM",
+      "airportName": "Chhatrapati Shivaji Maharaj International Airport",
+      "city": "Mumbai",
+      "country": "India",
+      "state": "Maharashtra",
+      "timezone": "Asia/Kolkata"
+    },
+    {
+      "airportCode": "BLR",
+      "airportName": "Kempegowda International Airport",
+      "city": "Bangalore",
+      "country": "India",
+      "state": "Karnataka",
+      "timezone": "Asia/Kolkata"
+    }
+  ]
+}
 ```
 
 ## Error Handling
@@ -442,6 +626,22 @@ The API uses consistent error responses:
 }
 ```
 
+### Airport Validation Errors
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "airportCode",
+      "message": "Airport code must be exactly 3 characters",
+      "value": "DE"
+    }
+  ],
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
 ## Security Features
 
 - **JWT Authentication**: Secure token-based authentication
@@ -453,6 +653,7 @@ The API uses consistent error responses:
 - **Role-based Access**: Admin-only endpoints protection
 - **Agent ID Protection**: Agent IDs cannot be manually modified
 - **Multi-identifier Security**: All login methods use the same security validation
+- **Airport Code Validation**: Strict format enforcement for airport codes
 
 ## Development
 

@@ -276,6 +276,191 @@ const validatePagination = [
   handleValidationErrors
 ];
 
+/**
+ * Airport creation validation rules
+ */
+const validateAirportCreation = [
+  body('airportCode')
+    .isLength({ min: 3, max: 3 })
+    .withMessage('Airport code must be exactly 3 characters')
+    .matches(/^[A-Z]{3}$/i)
+    .withMessage('Airport code must be 3 uppercase letters (e.g., DEL, BOM, JFK)'),
+  
+  body('airportName')
+    .notEmpty()
+    .trim()
+    .withMessage('Airport name is required')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Airport name must be between 2 and 100 characters'),
+  
+  body('city')
+    .notEmpty()
+    .trim()
+    .withMessage('City is required')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('City must be between 2 and 50 characters'),
+  
+  body('country')
+    .notEmpty()
+    .trim()
+    .withMessage('Country is required')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Country must be between 2 and 50 characters'),
+  
+  body('state')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('State must be between 2 and 50 characters'),
+  
+  handleValidationErrors
+];
+
+/**
+ * Airport update validation rules
+ */
+const validateAirportUpdate = [
+  body('airportCode')
+    .optional()
+    .isLength({ min: 3, max: 3 })
+    .withMessage('Airport code must be exactly 3 characters')
+    .matches(/^[A-Z]{3}$/i)
+    .withMessage('Airport code must be 3 uppercase letters (e.g., DEL, BOM, JFK)'),
+  
+  body('airportName')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Airport name must be between 2 and 100 characters'),
+  
+  body('city')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('City must be between 2 and 50 characters'),
+  
+  body('country')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Country must be between 2 and 50 characters'),
+  
+  body('state')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('State must be between 2 and 50 characters'),
+  
+  body('isActive')
+    .optional()
+    .isBoolean()
+    .withMessage('isActive must be a boolean value'),
+  
+  handleValidationErrors
+];
+
+/**
+ * Airport ID parameter validation
+ */
+const validateAirportId = [
+  param('id')
+    .isMongoId()
+    .withMessage('Invalid airport ID format'),
+  
+  handleValidationErrors
+];
+
+/**
+ * Airport code parameter validation
+ */
+const validateAirportCode = [
+  param('code')
+    .isLength({ min: 3, max: 3 })
+    .withMessage('Airport code must be exactly 3 characters')
+    .matches(/^[A-Z]{3}$/i)
+    .withMessage('Airport code must be 3 uppercase letters'),
+  
+  handleValidationErrors
+];
+
+/**
+ * Airport search query validation
+ */
+const validateAirportSearch = [
+  query('q')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Search query must be between 1 and 50 characters'),
+  
+  query('country')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Country filter must be between 2 and 50 characters'),
+  
+  query('city')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('City filter must be between 2 and 50 characters'),
+  
+  query('isActive')
+    .optional()
+    .isIn(['true', 'false'])
+    .withMessage('isActive must be true or false'),
+  
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be a positive integer'),
+  
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Limit must be between 1 and 100'),
+  
+  handleValidationErrors
+];
+
+/**
+ * Bulk airport import validation
+ */
+const validateBulkAirportImport = [
+  body('airports')
+    .isArray({ min: 1 })
+    .withMessage('Airports must be a non-empty array'),
+  
+  body('airports.*.airportCode')
+    .isLength({ min: 3, max: 3 })
+    .withMessage('Each airport code must be exactly 3 characters')
+    .matches(/^[A-Z]{3}$/i)
+    .withMessage('Each airport code must be 3 uppercase letters'),
+  
+  body('airports.*.airportName')
+    .notEmpty()
+    .trim()
+    .withMessage('Each airport must have a name')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Each airport name must be between 2 and 100 characters'),
+  
+  body('airports.*.city')
+    .notEmpty()
+    .trim()
+    .withMessage('Each airport must have a city')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Each city must be between 2 and 50 characters'),
+  
+  body('airports.*.country')
+    .notEmpty()
+    .trim()
+    .withMessage('Each airport must have a country')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Each country must be between 2 and 50 characters'),
+  
+  handleValidationErrors
+];
+
 module.exports = {
   handleValidationErrors,
   validateUserRegistration,
@@ -285,5 +470,11 @@ module.exports = {
   validateUserUpdate,
   validatePasswordChange,
   validateUserId,
-  validatePagination
+  validatePagination,
+  validateAirportCreation,
+  validateAirportUpdate,
+  validateAirportId,
+  validateAirportCode,
+  validateAirportSearch,
+  validateBulkAirportImport
 }; 

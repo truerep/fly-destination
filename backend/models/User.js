@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema({
     required: true,
     default: 'customer'
   },
+  // Approval status for agents
+  isApproved: {
+    type: Boolean,
+    default: function() { return this.userType !== 'agent'; }
+  },
   isActive: {
     type: Boolean,
     default: true
@@ -65,6 +70,11 @@ const userSchema = new mongoose.Schema({
   companyName: {
     type: String,
     required: function() { return this.userType === 'agent'; }
+  },
+
+  // Profile image URL
+  profileImageUrl: {
+    type: String
   },
   landlineNumber: {
     type: String
@@ -178,6 +188,7 @@ userSchema.index({ phoneNumber: 1 });
 userSchema.index({ userType: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ isBlocked: 1 });
+userSchema.index({ isApproved: 1 });
 userSchema.index({ agentId: 1 });
 userSchema.index({ balance: 1 });
 

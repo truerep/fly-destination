@@ -16,6 +16,7 @@ export default function AgentsPage() {
 	const [page, setPage] = useState(1);
 	const [total, setTotal] = useState(0);
 	const [limit, setLimit] = useState(10);
+	const [pendingOnly, setPendingOnly] = useState(false);
 
 	async function fetchAgents() {
 		setLoading(true);
@@ -24,6 +25,7 @@ export default function AgentsPage() {
 			url.searchParams.set("page", String(page));
 			url.searchParams.set("limit", String(limit));
 			url.searchParams.set("userType", "agent");
+			if (pendingOnly) url.searchParams.set("isApproved", "false");
 			if (search) url.searchParams.set("search", search);
 			const res = await fetch(url.toString(), {
 				headers: {
@@ -32,8 +34,9 @@ export default function AgentsPage() {
 			});
 			const data = await res.json();
 			if (res.ok && data?.data) {
-				setAgents(data.data.items || data.data.users || []);
-				setTotal(data.data.total || 0);
+				const items = data.data.items || data.data.users || [];
+				setAgents(items);
+				setTotal(data.data.total || data.data.pagination?.total || items.length);
 			} else {
 				console.error(data);
 			}
@@ -59,6 +62,10 @@ export default function AgentsPage() {
 				<div className="flex items-center gap-2 mb-4">
 					<Input placeholder="Search email / phone / company / agent ID" value={search} onChange={(e) => setSearch(e.target.value)} />
 					<Button className="bg-orange-600 hover:bg-orange-700" onClick={() => { setPage(1); fetchAgents(); }}>Search</Button>
+					<label className="flex items-center gap-2 text-sm">
+						<input type="checkbox" checked={pendingOnly} onChange={(e) => { setPendingOnly(e.target.checked); setPage(1); }} />
+						<span>Account pending for approval</span>
+					</label>
 				</div>
 				<div className="rounded-md border">
 					<Table>
@@ -82,10 +89,23 @@ export default function AgentsPage() {
 											<span className="text-xs text-muted-foreground">{a.email} • {a.phoneNumber}</span>
 										</div>
 									</TableCell>
-									<TableCell>{a.isBlocked ? "Blocked" : a.isActive ? "Active" : "Inactive"}</TableCell>
+									<TableCell>{a.isBlocked ? "Blocked" : a.userType === 'agent' && !a.isApproved ? "Pending Approval" : a.isActive ? "Active" : "Inactive"}</TableCell>
 									<TableCell>
 										<div className="flex gap-2">
 											<Link className="text-orange-600 text-sm" href={`/admin-panel/agents/${a._id}`}>View</Link>
+											{a.userType === 'agent' && !a.isApproved && (
+												<button
+													className="text-green-600 text-sm"
+													onClick={async () => {
+														try {
+															const res = await fetch(`${API_BASE}/api/users/${a._id}/approve`, { method: 'PATCH', headers: { Authorization: `Bearer ${localStorage.getItem('fd_token') || ''}` } });
+															if (res.ok) fetchAgents();
+														} catch {}
+													}}
+												>
+													Approve
+												</button>
+											)}
 										</div>
 									</TableCell>
 								</TableRow>

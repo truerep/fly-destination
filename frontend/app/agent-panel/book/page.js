@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card as UICard, CardContent as UICardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { searchTickets, createBooking, getProfile } from "@/lib/api";
 
@@ -57,7 +58,7 @@ export default function BookFlightPage() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [quantity]);
 
-	const unitSellingPrice = useMemo(() => {
+const unitSellingPrice = useMemo(() => {
 		if (!selected) return 0;
 		return Number(selected.basePrice || 0) + markerAmount;
 	}, [selected, markerAmount]);
@@ -106,41 +107,38 @@ export default function BookFlightPage() {
 							</Button>
 						</div>
 					</div>
-					<div className="rounded-md border mt-4">
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Airline</TableHead>
-									<TableHead>Flight</TableHead>
-									<TableHead>Departure</TableHead>
-									<TableHead>Arrival</TableHead>
-									<TableHead>Base</TableHead>
-									<TableHead>Sell (with marker)</TableHead>
-									<TableHead></TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{results.map((t) => (
-									<TableRow key={t._id}>
-										<TableCell>{t.airline}</TableCell>
-										<TableCell>{t.flightNumber}</TableCell>
-										<TableCell>{new Date(t.departureTime).toLocaleString()}</TableCell>
-										<TableCell>{new Date(t.arrivalTime).toLocaleString()}</TableCell>
-										<TableCell>₹ {Number(t.basePrice).toLocaleString()}</TableCell>
-										<TableCell>₹ {(Number(t.basePrice) + markerAmount).toLocaleString()}</TableCell>
-										<TableCell>
-											<Button size="sm" variant="outline" onClick={() => { setSelected(t); setQuantity(1); setInfants(0); initPassengers(1); }}>Select</Button>
-										</TableCell>
-									</TableRow>
-								))}
-								{!loading && results.length === 0 && (
-									<TableRow>
-										<TableCell colSpan={7} className="text-center text-sm text-muted-foreground">No results</TableCell>
-									</TableRow>
-								)}
-							</TableBody>
-						</Table>
-					</div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {results.map((t) => (
+              <UICard key={t._id} className="border rounded-lg">
+                <UICardContent className="p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-base font-medium">{t.airline}</div>
+                    <div className="text-xs text-muted-foreground">{t.flightNumber}</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <div className="text-muted-foreground">Departure</div>
+                      <div>{new Date(t.departureTime).toLocaleString()}</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Arrival</div>
+                      <div>{new Date(t.arrivalTime).toLocaleString()}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div>Base: <strong>₹ {Number(t.basePrice).toLocaleString()}</strong></div>
+                    <div>Sell: <strong>₹ {(Number(t.basePrice) + markerAmount).toLocaleString()}</strong></div>
+                  </div>
+                  <div className="pt-2">
+                    <Button size="sm" className="w-full bg-orange-600 hover:bg-orange-700" onClick={() => { setSelected(t); setQuantity(1); setInfants(0); initPassengers(1); }}>Select</Button>
+                  </div>
+                </UICardContent>
+              </UICard>
+            ))}
+            {!loading && results.length === 0 && (
+              <div className="col-span-full text-center text-sm text-muted-foreground border rounded-md p-6">No results</div>
+            )}
+          </div>
 				</CardContent>
 			</Card>
 
@@ -159,11 +157,37 @@ export default function BookFlightPage() {
 								<Label>Infants</Label>
 								<Input type="number" min={0} value={infants} onChange={(e) => setInfants(Math.max(0, Number(e.target.value || 0)))} />
 							</div>
-							<div className="self-end">
-								<div className="text-sm">Unit Selling Price: <strong>₹ {unitSellingPrice.toLocaleString()}</strong></div>
-								<div className="text-sm">Total Selling: <strong>₹ {(unitSellingPrice * quantity).toLocaleString()}</strong></div>
-							</div>
+            <div className="self-end">
+              <div className="text-sm">Unit Selling Price: <strong>₹ {unitSellingPrice.toLocaleString()}</strong></div>
+              <div className="text-sm">Total Selling: <strong>₹ {(unitSellingPrice * quantity).toLocaleString()}</strong></div>
+            </div>
 						</div>
+
+          {/* Inline marker amount override */}
+          <div className="grid gap-2 md:grid-cols-3">
+            <div>
+              <Label>Marker Amount (₹)</Label>
+              <Input
+                type="number"
+                min={0}
+                value={markerAmount}
+                onChange={(e) => {
+                  const v = Math.max(0, Number(e.target.value || 0));
+                  // Update via API and refresh profile
+                  (async () => {
+                    try {
+                      const { updateMarkerAmount, getProfile } = await import("@/lib/api");
+                      await updateMarkerAmount(v);
+                      const fresh = await getProfile();
+                      setProfile(fresh?.user || fresh);
+                    } catch (err) {
+                      toast.error(err.message || 'Failed to update marker amount');
+                    }
+                  })();
+                }}
+              />
+            </div>
+          </div>
 
 						<div className="space-y-3">
 							{passengers.map((p, idx) => (

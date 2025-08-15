@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-				<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+				<ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey={null}>
 					{children}
 					<Toaster richColors position="top-right" />
 				</ThemeProvider>

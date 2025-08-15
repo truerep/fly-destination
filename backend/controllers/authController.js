@@ -29,7 +29,8 @@ class AuthController {
         state,
         country,
         pincode,
-        remark
+        remark,
+        profileImageBase64
       } = req.body;
 
       // Check if user already exists
@@ -66,12 +67,26 @@ class AuthController {
           state,
           country,
           pincode,
-          remark
+          remark,
+          isActive: false,
+          isApproved: false
         });
       }
 
       // Create new user
       const user = new User(userData);
+      
+      // If profile image provided, upload and store URL (handled by service)
+      if (profileImageBase64) {
+        try {
+          const { uploadBase64Image } = require('../services/uploadService');
+          const upload = await uploadBase64Image(profileImageBase64);
+          if (upload?.url) user.profileImageUrl = upload.url;
+        } catch (e) {
+          // Non-fatal: continue without image
+          console.warn('Image upload failed:', e.message);
+        }
+      }
       await user.save();
 
       // Generate OTP for phone verification
@@ -85,22 +100,23 @@ class AuthController {
       // Send OTP via SMS
       await smsService.sendOTP(phoneNumber, otp);
 
-      // Generate JWT token
-      const token = generateToken(user._id);
-
-      // Update last login
-      user.lastLoginAt = new Date();
-      await user.save();
+      // Decide response for agents: pending approval
+      let token;
+      if (user.userType !== 'agent') {
+        token = generateToken(user._id);
+        user.lastLoginAt = new Date();
+        await user.save();
+      }
 
       // Prepare success message based on user type
       let successMessage = 'User registered successfully. Please verify your phone number.';
       if (userType === 'agent') {
-        successMessage = `Agent registered successfully with ID: ${user.agentId}. Please verify your phone number.`;
+        successMessage = `Agent registered successfully with ID: ${user.agentId}. Account pending for approval.`;
       }
 
       return ResponseHandler.success(res, {
         user: user.toPublicJSON(),
-        token
+        ...(token ? { token } : {})
       }, successMessage, 201);
 
     } catch (error) {
@@ -143,6 +159,11 @@ class AuthController {
 
       if (!user) {
         return ResponseHandler.unauthorized(res, 'Invalid credentials');
+      }
+
+      // For agents, check approval status first
+      if (user.userType === 'agent' && !user.isApproved) {
+        return ResponseHandler.forbidden(res, 'Account pending for approval');
       }
 
       // Check if user is active
@@ -313,7 +334,7 @@ class AuthController {
   async updateProfile(req, res) {
     try {
       const userId = req.user._id;
-      const updateData = req.body;
+      const updateData = { ...req.body };
 
       // Remove sensitive fields that shouldn't be updated via this endpoint
       delete updateData.password;
@@ -323,6 +344,21 @@ class AuthController {
       delete updateData.isEmailVerified;
       delete updateData.isPhoneVerified;
       delete updateData.agentId; // Prevent manual agentId updates
+
+      // Handle profile image upload if provided as base64
+      if (updateData.profileImageBase64) {
+        try {
+          const { uploadBase64Image } = require('../services/uploadService');
+          const upload = await uploadBase64Image(updateData.profileImageBase64);
+          if (upload?.url) {
+            updateData.profileImageUrl = upload.url;
+          }
+        } catch (e) {
+          console.warn('Image upload failed:', e.message);
+        } finally {
+          delete updateData.profileImageBase64;
+        }
+      }
 
       const user = await User.findByIdAndUpdate(
         userId,

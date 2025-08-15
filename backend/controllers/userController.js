@@ -12,6 +12,7 @@ class UserController {
       const filter = {};
       if (req.query.userType) filter.userType = req.query.userType;
       if (req.query.isActive !== undefined) filter.isActive = req.query.isActive === 'true';
+      if (req.query.isApproved !== undefined) filter.isApproved = req.query.isApproved === 'true';
       if (req.query.isBlocked !== undefined) filter.isBlocked = req.query.isBlocked === 'true';
       if (req.query.search) {
         filter.$or = [
@@ -240,6 +241,27 @@ class UserController {
     } catch (error) {
       console.error('Deactivate user error:', error);
       return ResponseHandler.error(res, 'Failed to deactivate user');
+    }
+  }
+
+  // Admin: approve agent account
+  async approveUser(req, res) {
+    try {
+      const { id } = req.params;
+      const user = await User.findById(id);
+      if (!user) {
+        return ResponseHandler.notFound(res, 'User not found');
+      }
+      if (user.userType !== 'agent') {
+        return ResponseHandler.forbidden(res, 'Only agent accounts require approval');
+      }
+      user.isApproved = true;
+      user.isActive = true;
+      await user.save();
+      return ResponseHandler.success(res, { user: user.toPublicJSON() }, 'Agent approved successfully');
+    } catch (error) {
+      console.error('Approve user error:', error);
+      return ResponseHandler.error(res, 'Failed to approve user');
     }
   }
 

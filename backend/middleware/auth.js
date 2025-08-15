@@ -32,6 +32,11 @@ const authenticateToken = async (req, res, next) => {
       return ResponseHandler.forbidden(res, 'Account is blocked');
     }
 
+    // For agents accessing protected routes, ensure approved
+    if (user.userType === 'agent' && !user.isApproved) {
+      return ResponseHandler.forbidden(res, 'Account pending for approval');
+    }
+
     // Check if password was changed after token was issued
     if (user.changedPasswordAfter(decoded.iat)) {
       return ResponseHandler.unauthorized(res, 'Password recently changed, please login again');

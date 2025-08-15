@@ -41,7 +41,7 @@ export default function HomeGate() {
 			});
 			const data = await res.json();
 			
-			if (res.ok && data?.success) {
+            if (res.ok && data?.success) {
 				const userType = data.data.user.userType;
 				localStorage.setItem("fd_role", userType);
 				localStorage.setItem("fd_token", data.data.token);
@@ -49,7 +49,12 @@ export default function HomeGate() {
 				toast.success(data.message || "Login successful");
 				setRole(userType);
 			} else {
-				toast.error(data?.message || "Login failed");
+              // Show pending approval message distinctly
+              if (data?.message && data.message.toLowerCase().includes('pending')) {
+                toast.info(data.message);
+              } else {
+                toast.error(data?.message || "Login failed");
+              }
 			}
 		} catch (error) {
 			toast.error("Login failed");

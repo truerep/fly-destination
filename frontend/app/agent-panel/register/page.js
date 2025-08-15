@@ -29,6 +29,7 @@ export default function AgentRegisterPage() {
 		country: "",
 		pincode: "",
 		remark: "",
+		profileImageBase64: "",
 	});
 
 	function setField(k, v) { setForm((f) => ({ ...f, [k]: v })); }
@@ -43,8 +44,6 @@ export default function AgentRegisterPage() {
 			const data = await res.json();
 			if (res.ok) {
 				toast.success(data?.message || "Registered successfully");
-				localStorage.setItem("fd_role", "agent");
-				localStorage.setItem("fd_token", data?.data?.token || "");
 			} else {
 				toast.error(data?.message || "Registration failed");
 			}
@@ -59,6 +58,20 @@ export default function AgentRegisterPage() {
 				<CardTitle>New Agent Registration</CardTitle>
 			</CardHeader>
 			<CardContent className="grid gap-4 md:grid-cols-2">
+				<div className="space-y-2 md:col-span-2">
+					<Label>Profile Image</Label>
+					<input
+						type="file"
+						accept="image/*"
+						onChange={(e) => {
+							const file = e.target.files?.[0];
+							if (!file) return;
+							const reader = new FileReader();
+							reader.onload = () => setField('profileImageBase64', String(reader.result || ''));
+							reader.readAsDataURL(file);
+						}}
+					/>
+				</div>
 				<div className="space-y-2 md:col-span-2">
 					<Label>Email</Label>
 					<Input value={form.email} onChange={(e) => setField("email", e.target.value)} />

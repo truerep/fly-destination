@@ -30,5 +30,6 @@ router.patch('/:id/block', validateUserId, userController.blockUser);
 router.patch('/:id/unblock', validateUserId, userController.unblockUser);
 router.patch('/:id/activate', validateUserId, userController.activateUser);
 router.patch('/:id/deactivate', validateUserId, userController.deactivateUser);
+router.patch('/:id/approve', validateUserId, userController.approveUser);
 
 module.exports = router; 

@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+.ticket {
+    width: 210mm;
+    color: #000;
+    font-family: 'Inter', sans-serif;
+}
+.flight-path {
+    position: relative;
+}
+.flight-path:before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #f97316, transparent);
+    transform: translateY(-50%);
+}
+.flight-path:after {
+    content: "✈";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #f97316;
+    font-size: 1.5rem;
+}
+.qr-code {
+    background: conic-gradient(
+        #000 0% 25%, 
+        transparent 0% 50%, 
+        #000 0% 75%, 
+        transparent 0% 100%
+    ) 0 0/10px 10px;
+}
+.passenger-card {
+    border-left: 4px solid #f97316;
+}
+
+/* print styles */
+@media print {
+    .print-none {
+        display: none!important
+    }
+
+    #mainWrapper {
+        padding: 0;
+        margin: 0;
+    }
+
+    body {
+        visibility: hidden
+    }
+
+    #printContainer {
+        visibility: visible;
+        margin: 0 auto
+    }
+
+    #printContainer,#printContainer:last-child {
+        page-break-after: auto
+    }
+
+    :after,:before,body * {
+        -webkit-print-color-adjust: exact!important;
+        color-adjust: exact!important
+    }
+}
+
+@page {
+    size: A4;
+    margin: 0;
+    padding: 20px 0; 
+}
+
+@page :first {
+    padding-top: 0mm;    
+    padding-bottom: 10px;
+}
+
+/* Text colors */
+.text-airline-primary { color: #f97316; }
+.text-airline-secondary { color: #ea580c; }
+.text-airline-light { color: #ffedd5; }
+
+/* Background colors */
+.bg-airline-primary { background-color: #f97316; }
+.bg-airline-secondary { background-color: #ea580c; }
+.bg-airline-light { background-color: #ffedd5; }
+
+/* Border colors */
+.border-airline-primary { border-color: #f97316; }
+.border-airline-secondary { border-color: #ea580c; }
+.border-airline-light { border-color: #ffedd5; }
+
+/* Divide colors */
+.divide-airline-primary > :not([hidden]) ~ :not([hidden]) { border-color: #f97316; }
+.divide-airline-secondary > :not([hidden]) ~ :not([hidden]) { border-color: #ea580c; }
+.divide-airline-light > :not([hidden]) ~ :not([hidden]) { border-color: #ffedd5; }
+
+/* Ring colors */
+.ring-airline-primary { --tw-ring-color: #f97316; }
+.ring-airline-secondary { --tw-ring-color: #ea580c; }
+.ring-airline-light { --tw-ring-color: #ffedd5; }
+
+/* Outline colors */
+.outline-airline-primary { outline-color: #f97316; }
+.outline-airline-secondary { outline-color: #ea580c; }
+.outline-airline-light { outline-color: #ffedd5; }
+
+.bg-gradient-to-r { background-image: linear-gradient(to right, var(--tw-gradient-stops)); }
+.from-airline-primary {
+  --tw-gradient-from: #f97316;
+  --tw-gradient-to: rgb(249 115 22 / 0);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.to-airline-secondary { --tw-gradient-to: #ea580c; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

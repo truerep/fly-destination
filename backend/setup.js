@@ -15,20 +15,20 @@ async function setupDatabase() {
     console.log('✅ Connected to MongoDB');
 
     // Check if admin user already exists
-    const existingAdmin = await User.findOne({ userType: 'admin' });
+    // const existingAdmin = await User.findOne({ userType: 'admin' });
     
-    if (existingAdmin) {
-      console.log('ℹ️  Admin user already exists');
-      return;
-    }
+    // if (existingAdmin) {
+    //   console.log('ℹ️  Admin user already exists');
+    //   return;
+    // }
 
     // Create default admin user
     // password: 'AdminPass123!',
     const adminData = {
       userType: 'admin',
-      email: 'admin@flydestination.com',
-      password: 'admin123',
-      phoneNumber: '+917347648126',
+      email: 'venkyncccadet@gmail.com',
+      password: 'Nani@143',
+      phoneNumber: '9933245651',
       isEmailVerified: true,
       isPhoneVerified: true,
       isActive: true,
